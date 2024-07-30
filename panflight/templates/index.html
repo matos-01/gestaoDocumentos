@@ -1,0 +1,104 @@
+{% extends 'layout.html' %}
+{% load i18n %}
+{% load tags_extra %}
+{% block script %}
+<script>
+$(document).ready(function(){
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+  $('#sidebarCollapse').on('click', function () {
+    $('#sidebar').toggleClass('active');
+    $(this).toggleClass('active');
+  });
+});
+</script>
+{% endblock script %}
+{%block style%}
+  <style>
+    #tableCarteira, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      margin-top: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: lightgray;
+    }
+    #newsGroup a:hover {
+      background-color: lightgray;
+    }
+    .tooltip-inner {
+      max-width: 350px;
+    }
+  </style>
+{% endblock style %}
+{%block content%}
+            <!-- Page Body -->
+              <h2>Notícias em Destaque</h2>
+            {% for news in news_list %}
+              <ul class="list-group list-group-flush" id="newsGroup">
+                <a href="#" class="list-group-item" data-toggle="modal" data-target="#newsModal_{{ news.id }}">{{ news.title }}</a>
+              </ul>
+            {% endfor %}
+	    {% if perms.panflight.view_project %}
+            <div class="line"></div>
+            {% if object_list %}
+              <h2>Carteira de Projetos</h2>
+              <table style="width:100%" id="tableCarteira">
+                <tr>
+                  <th>Código</th>
+                  <th>Nome</th>
+                  <th>Status</th>
+                  <th>Início Previsto</th>
+                  <th>Conclusão Prevista</th>
+                </tr>
+                  {% for item in object_list %}
+                  <tr>
+                    <td><a href="{% url 'project_details' item.pk %}" data-toggle="tooltip" data-html="true"
+                      title={% if item.media %}
+                      "<img src='{{ item.media.url }}' Width='200px%'>"
+                      {%else%}
+                      "<em>Clique para ver os detalhes do projeto</em>"
+                      {%endif%}
+                      />{{ item.identifier }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{% get_item item.statuses item.status  %}</td>
+                    <td>{{ item.start_date|parse_date }}</td>
+                    <td>{{ item.end_date|parse_date }}</td>
+                  </tr>
+                  {% endfor %}
+              </table>
+            {% endif %}
+	    {% endif %}
+
+{% endblock content%}
+{% block footer %}
+  {% for news in news_list %}
+  <!-- News Modal -->
+  <div class="modal fade" id="newsModal_{{ news.id }}" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newsModalTitle">{{news.title}}</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% if news.media %}
+          <center>
+          <img src="uploads\{{ news.media }}" style="width:100%">
+          <br>
+          </center>
+          {% endif %}
+          {{ news.description }}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+{% endblock footer %}

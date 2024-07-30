@@ -1,0 +1,77 @@
+{% extends 'layout.html' %}
+{% load i18n %}
+{% load tags_extra %}
+{% block script %}
+<script>
+$(document).ready(function(){
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+  $('#sidebarCollapse').on('click', function () {
+    $('#sidebar').toggleClass('active');
+    $(this).toggleClass('active');
+  });
+});
+</script>
+{% endblock script %}
+{%block style%}
+  <style>
+    #tableCarteira, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      margin-top: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: lightgray;
+    }
+    #newsGroup a:hover {
+      background-color: lightgray;
+    }
+    .tooltip-inner {
+      max-width: 350px;
+    }
+    #btn_create {
+      height: 40px;
+      font-size: inherit;
+    }
+  </style>
+{% endblock style %}
+{%block content%}
+            <!-- Page Body -->
+            <div class="line"></div>
+            {% if list_status == "Novos" and perms.panflight.add_project %}
+              <div class="float-right"><a href="{% url 'create_project' %}" id="btn_create" type="button" class="btn btn-lg btn-primary">Criar Novo Projeto</a></div>
+            {% endif %}
+            {% if object_list %}
+            <h2>Carteira de Projetos {{ list_status }}</h2>
+              <table style="width:100%" id="tableCarteira">
+                <tr>
+                  <th>Código</th>
+                  <th>Nome</th>
+                  <th>Status</th>
+                  <th>Início Previsto</th>
+                  <th>Conclusão Prevista</th>
+                </tr>
+                  {% for item in object_list %}
+                    <tr>
+                      <td><a href="{% url 'project_details' item.pk %}" data-toggle="tooltip" data-html="true"
+                        title={% if item.media %}
+                        "<img src='../../uploads/{{item.media}}' Width='200px%'>"
+                        {%else%}
+                        "<em>Clique para ver os detalhes do projeto</em>"
+                        {%endif%}
+                        />{{ item.identifier }}</td>
+                      <td>{{ item.name }}</td>
+                      <td>{% get_item item.statuses item.status  %}</td>
+                      <td>{{ item.start_date|parse_date }}</td>
+                      <td>{{ item.end_date|parse_date }}</td>
+                    </tr>
+                  {% endfor %}
+              </table>
+            {% else %}
+            <center><h2>Não existem Projetos nesse estado.</h2>
+            {% endif %}
+
+
+{% endblock content%}

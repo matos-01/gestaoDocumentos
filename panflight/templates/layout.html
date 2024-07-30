@@ -1,0 +1,204 @@
+{% load static %}
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=yes">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>PanFlight - Gerenciador de Documentos e Permissões - {%block title%}{%endblock title%}</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="{% static 'bootstrap-4.5.0-dist/css/bootstrap.min.css' %}">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'js/datetimepicker-master/jquery.datetimepicker.css' %}"/ >
+  <link rel="stylesheet" href="{% static 'icons/css/all.css' %}"/ >
+  
+  <!-- Icon -->
+  <link rel="shortcut icon" type="image/png" href="{% static 'img/icon_borderless.png' %}" >
+
+  <!-- Font Awesome JS -->
+  <script src="{% static 'fontawesome_5.13.1/js/solid.js' %}"></script>
+  <script src="{% static 'fontawesome_5.13.1/js/fontawesome.js' %}"></script>
+  <script src="{% static 'js/jquery-3.5.1.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="{% static 'bootstrap-4.5.0-dist/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'bootstrap-4.5.0-dist/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'js/datetimepicker-master/build/jquery.datetimepicker.full.min.js' %}"></script>
+
+
+  {% block script %}
+  <script>
+    $(document).ready(function(){
+      $("#{{ form.search.auto_id }}").attr({'class':'form-control'});
+      $("#search_field").show();
+    });
+    function formSubmit(){
+      document.getElementById("home_form").submit();
+    }
+    </script>
+  {% endblock script %}
+  {% block style %}
+  {% endblock style %}
+</head>
+
+<body>
+    {% csrf_token %}
+  <div class="wrapper">
+    <!-- Sidebar Holder -->
+    <nav id="sidebar">
+        <div class="sidebar-header">
+          <img src="{% static 'img/main_logo_transparent.png' %}" style="width: 100%">
+        </div>
+        <ul class="list-unstyled components">
+
+          <div class="input-group md-form form-sm form-2 pl-0" style="margin-bottom: 10px;display:none" id="search_field">
+            {{ form.search }}
+            <div class="input-group-append">
+              <span class="input-group-text lime lighten-2" id="basic-text1" onclick="formSubmit();"><i class="fas fa-search text-grey"
+                  aria-hidden="true"></i></span>
+            </div>
+          </div>
+
+            <li class="active">
+              <a href="{% url 'home' %}">Home</a>
+            </li>
+	    {% if subcategories %}
+            {% if perms.panflight.view_document %}
+		    <li>
+		      <a href="#documentSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Documentos</a>
+		      <ul class="collapse list-unstyled" id="documentSubmenu">
+			{% for item in categories %}
+      {% for group in item.groups.all %}
+      {% if group in request.user.groups.all %}
+			  <li>
+				  <a href="#CategorySubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">{{ item.name }}</a>
+				  {% for subitem in subcategories %}
+				  {% if subitem.category.name == item.name %}
+				  <ul class="collapse list-unstyled" id="CategorySubmenu">
+					  <li>
+						  <a href="{% url 'document_list' subitem.id %}"><i style="margin-left: 15px">{{ subitem.name }}</i></a>
+					  </li>
+				  </ul>
+			    </li>
+	      			  {% endif %}
+				  {% endfor %}
+        {% endif %}
+        {% endfor %}
+			  {% endfor %}
+		      </ul>
+	    {% else %}
+		    <li>
+		      <a href="{% url 'document_list' 'id' %}">Documentos</a>
+		    </li>
+	    {% endif %}
+	    {% endif %}
+            {% if perms.panflight.view_project %}
+	    <li>
+              <a href="#projectSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Projetos</a>
+              <ul class="collapse list-unstyled" id="projectSubmenu">
+                  <li>
+                    <a href="{% url 'project_list' 'todos' %}">Todos</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'project_list' 'novo' %}">Novo</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'project_list' 'execucao' %}">Em Execução</a>
+                  </li>
+                  <li>
+                      <a href="{% url 'project_list' 'concluidos' %}">Concluídos</a>
+                  </li>
+                  <li>
+                      <a href="{% url 'project_list' 'paralisados' %}">Paralisados</a>
+                  </li>
+                  <li>
+                      <a href="{% url 'project_list' 'cancelados' %}">Cancelados</a>
+                  </li>
+                </ul>
+            </li>
+	    {% endif %}
+            {% if perms.panflight.view_news %}
+            <li>
+              <a href="#newsSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Noticias</a>
+              <ul class="collapse list-unstyled" id="newsSubmenu">
+              {% if perms.panflight.add_news %}
+                <li>
+                  <a href="{% url 'create_news' %}">Nova</a>
+                </li>
+              {% endif %}
+              <li>
+                <a href="{% url 'news_list' %}">Histórico</a>
+              </li>
+            </ul>
+            </li>
+	    {% endif %}
+            {% if perms.panflight.view_project or perms.panflight.view_document %}
+            <li>
+              <a href="#reportSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Relatórios</a>
+              <ul class="collapse list-unstyled" id="reportSubmenu">
+              <li>
+                <a href="{% url 'project_report' %}">Projetos</a>
+              </li>
+              <li>
+                <a href="{% url 'activity_report' %}">Atividades</a>
+              </li>
+              <li>
+                <a href="{% url 'files_report' %}">Arquivos</a>
+              </li>
+            </ul>
+            </li>
+	    {% endif %}
+        </ul>
+
+        <ul class="list-unstyled CTAs">
+          <li>
+              <a href="https://www.panflight.com/" target="_blank" class="website">Website</a>
+	      {% if request.user.is_staff %}
+              <a href="/admin/" target="_blank" class="website">Admin</a>
+	      {% endif %}
+          </li>
+        </ul>
+	<a style="margin-left: 28%" href="https://dolarhoje.com/" class="dolar-hoje-button" data-currency="dolar" target="_blank" title="Cotação do Dólar Hoje">Dólar Hoje</a><script async src="//dolarhoje-widgets.s3.amazonaws.com/button.js"></script>
+    </nav>
+
+    <!-- Header -->
+    <div id="content">
+
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+              <div class="container-fluid">
+
+                  <button type="button" id="sidebarCollapse" class="navbar-btn">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                  </button>
+                  <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                      <i class="fas fa-align-justify"></i>
+                  </button>
+
+                  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                      <ul class="nav navbar-nav ml-auto">
+                          <li class="nav-item active">
+                            <a class="nav-link">Olá {{ request.user.first_name }}!</a>
+                          </li>
+                          <li class="nav-item active">
+                            <a class="nav-link" href="{% url 'logout' %}">(Sair)</a>
+                          </li>
+                      </ul>
+                  </div>
+              </div>
+          </nav>
+{% block content %}
+{% endblock content %}
+
+    </div>
+  </div>
+
+  </form>
+  {% block footer %}
+  {% endblock footer %}
+  </body>
+</html>

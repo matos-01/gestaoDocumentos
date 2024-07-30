@@ -1,0 +1,425 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% load tags_extra %}
+{% block script %}
+ <script src="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.js"></script>
+ <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.css">
+ <link  href="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.css" rel="stylesheet">
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.4/fotorama.js"></script>
+ <script>
+
+  $(document).ready(function(){
+    var isIE = /*@cc_on!@*/false || !!document.documentMode;
+    if(isIE === false){
+	document.getElementById('shared_folder').style.display = 'none';
+    }else{
+	document.getElementById('modal_folder').style.display = 'none';
+    }
+    $('#folder_modal').appendTo("body");
+    $('#sidebarCollapse').on('click', function () {
+      $('#sidebar').toggleClass('active');
+      $(this).toggleClass('active');
+    });
+  $('.fotorama').fotorama({
+      width: 700,
+      maxwidth: '100%',
+      ratio: 16/9,
+      allowfullscreen: true,
+      nav: 'thumbs'
+  });
+  });
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+  function openUpload(project_id){
+    url = "/projeto/upload_arquivo/" + project_id
+    window.open(url);
+  }
+  function openFolder(project_id){
+  	 $.ajax({
+      url: "{% url 'open_folder_rest' %}",
+      type: "GET",
+      data: {"project_id": '{{ object.id }}',
+      }
+    }).done(function(response_data){
+      if(response_data.success === true){
+ 		console.log('ok');
+      }else{
+        window.alert(response_data.error);
+      }
+    });
+  }
+  function createFolder(){
+    folder = $("#folder_name").val();
+    $.ajax({
+      url: "{% url 'create_folder_rest' %}",
+      type: "GET",
+      data: {"project_id": '{{ object.id }}',
+              "folder_name": folder,
+      }
+    }).done(function(response_data){
+      if(response_data.success === true){
+        document.getElementById('folder_name').readOnly = true;
+        $("#success_create").show();
+        $("#btn_create").hide();
+      }else{
+        window.alert(response_data.error);
+      }
+    });
+  }
+  function openStatusModal(id, value){
+    if(value=='1'){
+      text = 'Tem certeza que deseja Iniciar o Projeto?'
+      document.getElementById('status_message').innerHTML = text;
+      $("#reason").hide();
+    };
+    if(value=='3'){
+      text = 'Tem certeza que deseja Concluir* o Projeto?'
+      document.getElementById('status_message').innerHTML = text;
+      warning = '*Depois dessa ação nenhum arquivo poderá ser enviado para o projeto.'
+      document.getElementById('warning_message').innerHTML = warning;
+      $("#warning_message").show();
+      $("#reason").hide();
+    };
+    if(value=='2'){
+      text = 'Informe abaixo o motivo de pausa do Projeto:'
+      document.getElementById('status_message').innerHTML = text;
+      warning = '*Depois dessa ação só poderão ser enviados novos arquivos quando o projeto for retomado.'
+      document.getElementById('warning_message').innerHTML = warning;
+      $("#warning_message").show();
+      $("#reason").show();
+    };
+    if(value=='4'){
+      text = 'Informe abaixo o motivo do cancelamento do Projeto:'
+      document.getElementById('status_message').innerHTML = text;
+      warning = '*Depois dessa ação nenhum arquivo poderá ser enviado para o projeto.'
+      document.getElementById('warning_message').innerHTML = warning;
+      $("#warning_message").show();
+      $("#reason").show();
+    };
+    $('#status_modal').appendTo("body").modal('show');
+  }
+  function changeStatus(){
+    message = $("#status_message").text();
+    reason = $("#reason").val();
+    if(message.includes("Iniciar")){
+      status = 1;
+    }
+    if(message.includes("Concluir")){
+      status = 3;
+    }
+    if(message.includes("pausa")){
+      status = 2;
+    }
+    if(message.includes("cancelamento")){
+      status = 4;
+    }
+    $.ajax({
+      url: "{% url 'change_status_rest' %}",
+      type: "GET",
+      data: {"project_id": '{{ object.id }}',
+             "status": status,
+             "reason": reason,
+      }
+    }).done(function(response_data){
+      if(response_data.success === true){
+        $("#status_modal").modal("hide");
+        message = 'Projeto Alterado com Sucesso!';
+        title = 'Alteração de Projeto';
+        document.getElementById('result_message').innerHTML = message;
+        document.getElementById('result_title').innerHTML = title;
+        $('#result_modal').appendTo("body").modal('show');
+      }else{
+        $("#status_modal").modal("hide");
+        message = 'Erro ao Alterar Status' + response_data.error;
+        title = 'Alteração de Projeto';
+        document.getElementById('result_message').innerHTML = message;
+        document.getElementById('result_title').innerHTML = title;
+        $('#result_modal').appendTo("body").modal('show');
+      }
+    });
+  }
+function modalFolder(){
+    $('#path_modal').appendTo("body").modal('show');
+}
+function downloadAll(){
+  var inputs = $('input[name="arquivos"]:checked');
+  if(inputs.length < 1){
+    window.alert("É necessário selecionar mais de um arquivo para fazer o Download.")
+    return false;
+  }
+  if(inputs.length == 1){
+    window.alert("Para baixar somente um arquivo é só clicar em cima do nome do arquivo no campo Nome :)")
+    return false;
+  }
+  var fields = '';
+  for (var i=0; i < inputs.length; i++){
+    fields = fields + '_' + inputs[i].id;
+  }
+  url = '{% url "download_all" %}' + '?' + fields;
+  window.location.href = url;
+}
+function selectAll(){
+  $('input[name=arquivos]').prop('checked', true);
+}
+function deselectAll(){
+  $('input[name=arquivos]').prop('checked', false);
+}
+function showGallery(){
+  $(".fotorama").fadeOut();
+  if ($('.fotorama').is(":visible")){
+      $('#icon_.fa fa-minus-circle mr-2').removeClass('fa fa-minus-circle mr-2').addClass('fas fa-plus-circle');
+      document.getElementById('icon_').className = "fa fa-plus-circle mr-2";
+      $(".fotorama").fadeOut();
+  }else{
+      document.getElementById('icon_').className = "fa fa-plus-circle mr-2";
+      $(".fotorama").fadeIn();
+  }
+}
+  </script>
+{% endblock script %}
+{% block style %}
+<style>
+.media_project{
+  max-height: 250px;
+  max-width: 400px;
+  object-fit: contain;
+  border-left: 20px solid white;
+  position:fixed;
+  float:right;
+  right:35px;
+  top:94px;
+}
+</style>
+{% endblock style %}
+{% block content %}
+<div id="result_modal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h3 id="result_title"></h3>
+            </div>
+            <div class="modal-body">
+              <p id="result_message" style="margin-top:10px; color:red; text-align:center"></p>
+            </div>
+            <div class="modal-footer" style="text-align:center">
+                <button type="button" class="btn btn-lg btn-secondary" onclick="location.reload()">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="folder_modal" class="modal fade" id="folder_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Criar Nova Pasta</h3>
+            </div>
+            <div class="modal-body">
+              <label>Nome da Nova Pasta:</label>
+              <input type="text" id="folder_name" class="form-control"/>
+              <p id="success_create" style="margin-top:10px; color:red; display:none; text-align:center"><b>Nova Pasta Criada com Sucesso!</b></p>
+            </div>
+            <div class="modal-footer" style="text-align:center">
+                <button type="button" id="btn_create" class="btn btn-lg btn-success" onclick="createFolder(); return false">Criar</button>
+                <button type="button" class="btn btn-lg btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="path_modal" class="modal fade" id="folder_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Mapear Pasta Editáveis</h3>
+            </div>
+            <div class="modal-body">
+		    <label>Para abrir a pasta de editáveis do projeto, Abra o Executar (Iniciar -> Executar), copie e cole o seguinte caminho:</label>
+		    <label>\\Servidor02\GestorDoc$\Projetos\{{ project.identifier }} - {{ project.name }}\{{ department }}\Editáveis</label>
+            </div>
+            <div class="modal-footer" style="text-align:center">
+                <button type="button" class="btn btn-lg btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="status_modal" class="modal fade" id="folder_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h3>Alteração de Status do Projeto</h3>
+            </div>
+            <div class="modal-body">
+              <p id="status_message" style="text-align:left; color:black"></p>
+              <textarea id="reason" rows="2" class="form-control" style="margin-top:5px"></textarea>
+              <p id="warning_message" style="text-align:left; margin-bottom:1px; margin-top:10px; color:red; display:none; font-size:10px"></p>
+            </div>
+            <div class="modal-footer" style="text-align:center">
+                <button type="button" id="btn_create" class="btn btn-lg btn-success" onclick="changeStatus(); return false">Sim</button>
+                <button type="button" class="btn btn-lg btn-secondary" data-dismiss="modal">Não</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container-fluid">
+  <h2>Detalhes do Projeto</h2>
+  <hr style="border-top:3px solid black"/>
+  <div class="row">
+    <div class="col-md">
+      <span><strong>PN {{ object.panflight_pn }} | {{ object.name }}</strong></span><br>
+      <span style="margin-top: 10px;"><strong>Data de Início: </strong>{{ object.start_date|parse_date }}</span><br>
+      <span><strong>Conclusão Prevista: </strong>{{ object.end_date|parse_date }}</span><br>
+      <span><strong>Status: </strong>{% get_item object.statuses object.status %}</span><br>
+      <span><strong>PN Original: </strong>{{ object.original_pn }}</span>
+    </div>
+    {% if object.media %}
+    <div class="col-md">
+      <img src="../../uploads/{{object.media}}" class="media_project">
+    </div>
+    {% endif %}
+  </div>
+</div>
+<div>
+  <div class="container-fluid">
+    <div class="form-group" style="margin-top: 20px">
+      <label for="projectDescription">Descrição do Projeto</label>
+      <textarea readonly class="form-control" id="projectDescription" rows="3">{{ object.description }}</textarea>
+    </div>
+  </div>
+  {% if perms.panflight.change_project %}
+	  <center>
+	    <div class="container-fluid " style="margin-top: 20px">
+	      <div class="row">
+		{% if object.status != 1 %}
+		<div class="col-sm">
+		  <button class="btn btn-sm btn-primary" onclick="openStatusModal(this.id, '1'); return false">
+		    {% if object.status == 4 %}
+		      <span class="fas fa-play" data-placement="top"></span> Retomar Projeto
+		    {% elif object.status == 3 %}
+		      <span class="fas fa-play" data-placement="top"></span> Reabrir Projeto
+		    {% else %}
+		      <span class="fas fa-play" data-placement="top"></span> Iniciar Projeto
+		    {% endif %}
+		  </button>
+		</div>
+		{% endif %}
+		{% if object.status == 1 %}
+		<div class="col-sm">
+		  <button class="btn btn-sm btn-warning" onclick="openStatusModal(this.id, '2'); return false">
+		    <span class="fas fa-pause"></span> Pausar Projeto
+		  </button>
+		</div>
+		<div class="col-sm">
+		  <button class="btn btn-sm btn-success" onclick="openStatusModal(this.id, '3'); return false">
+		    <span class="fas fa-check"></span> Concluir Projeto
+		  </button>
+		</div>
+		{% endif %}
+		{% if object.status == 1 or object.status == 2 %}
+		<div class="col-sm">
+		  <button class="btn btn-sm btn-danger" onclick="openStatusModal(this.id, '4'); return false">
+		    <span class="fas fa-ban"></span> Cancelar Projeto
+		  </button>
+		</div>
+		{% endif %}
+	      </div>
+	    </div>
+	  </center>
+    <hr/>
+  {% endif %}
+  {% if photos %}
+    <div class="container-fluid" style="margin-top:20px">
+      <center><label>Galeria do Projeto</label>
+        <div class="fotorama">
+        {% for item in photos %}
+          <img src="{{ item }}" />
+				</a>
+        {% endfor %}
+			</div>
+    </div>
+    <hr/>
+  {% endif %}
+  {% if object.status != 0 %}
+    <div class="container-fluid" style="margin-top:20px">
+      <center><label for="projectFiles">Arquivos do Projeto</label>
+      <table data-toggle="table" data-search="true" data-search-align="center">
+        <thead class="thead-dark">
+          <tr>
+            <th scope="col" data-sortable="true" data-field="CheckBox"></th>
+            <th scope="col" data-sortable="true" data-field="Nome">Nome</th>
+            <th scope="col" data-sortable="true" data-field="Desenho">Cód. Desenho</th>
+            <th scope="col" data-sortable="true" data-field="versao">Versão</th>
+            <th scope="col" data-sortable="true" data-field="data_criacao">Data de Criação</th>
+            <th scope="col" data-sortable="true" data-field="user">Atualizado Por</th>
+            <th scope="col">Detalhes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for files in project_files %}
+            <tr>
+              <td><center><input type="checkbox" id="{{ files.id }}" name="arquivos"/></center></td>
+              <td><a href="{{ files.project_file.url }}" target="_blank" data-toggle="tooltip" data-html="true" title="Clique para baixar o arquivo">{{ files.name }}</a></td>
+              <td>{{ files.draw }}</td>
+              <td>{{ files.version }}</td>
+              <td>{{ files.upload_date|parse_date }}</td>
+              <td>{{ files.uploaded_by }}</td>
+              <td>
+		      <a class="btn btn-sm btn-info" href="{% url 'project_file_details' files.pk %}" target="_blank">
+			      <span class="fas fa-history"></span>Histórico</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+  {% if perms.panflight.view_projectfiles and project_files %}
+      <div class="row">
+        <div class="col-sm" id="download-all" style="margin-top:10px">
+           <button class="btn btn-sm btn-primary" onclick="downloadAll(); return false">
+            <span class="fas fa-download"></span> Baixar Selecionados
+          </button>
+        </div>
+        <div class="col-sm" id="select-all" style="margin-top:10px">
+           <button class="btn btn-sm btn-success" onclick="selectAll(); return false">
+            <span class="far fa-check-square"></span> Selecionar Tudo
+          </button>
+        </div>
+        <div class="col-sm" id="deselect-all" style="margin-top:10px">
+           <button class="btn btn-sm btn-danger" onclick="deselectAll(); return false">
+            <span class="far fa-square"></span> Limpar Seleção
+          </button>
+        </div>
+      </div>
+      <hr/>
+  {% endif %}
+  {% if object.status == 1 and perms.panflight.add_projectfiles %}
+      <div class="container-fluid " style="margin-top: 20px">
+        <div class="row">
+          <div class="col-sm">
+            <button class="btn btn-sm btn-info" onclick="openUpload('{{ object.id }}'); return false">
+              <span class="fas fa-upload" data-placement="top"></span> Enviar Arquivo
+            </button>
+          </div>
+   {% endif %}
+	  {% if perms.panflight.view_projectfiles %}
+		  <div class="col-sm" id="shared_folder">
+		     <a class="btn btn-sm btn-dark" href="file://Servidor02/GestorDoc$/Projetos/{{ project.identifier }} - {{ project.name }}/{{ department }}/Editáveis" target="explorer.exe">
+		      <span class="fas fa-folder-open"></span> Pasta Editáveis
+		    </a>
+		  </div>
+		  <div class="col-sm" id="modal_folder">
+		     <button class="btn btn-sm btn-dark" onclick="modalFolder(); return false">
+		      <span class="fas fa-folder-open"></span> Pasta Editáveis
+		    </button>
+		  </div>
+	  {% endif %}
+	  {% if perms.panflight.change_project %}
+          <!--<div class="col-sm">
+            <button class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#folder_modal" title="Enviar Arquivo">
+              <span class="fas fa-folder"></span> Criar Nova Pasta
+            </button>
+	    </div> --!>
+	  {% endif %}
+        </div>
+      </div>
+  </div>
+{% endif %}
+{% endblock content %}

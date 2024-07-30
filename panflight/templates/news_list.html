@@ -1,0 +1,34 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% load tags_extra %}
+{% block script %}
+<script>
+$(document).ready(function(){
+  $('#sidebarCollapse').on('click', function () {
+    $('#sidebar').toggleClass('active');
+    $(this).toggleClass('active');
+  });
+});
+</script>
+{% endblock script %}
+{% block content %}
+<h2 style="text-align: center">Histórico de Notícias</h2>
+<center>
+{% for item in news %}
+  <h3> {{ item.title }} </h3>
+  <h4>Criada em: {{ item.creation_date }}</h4>
+  <h4>Publicada em: {{ item.start_date }}</h4>
+  <h4>Termina em: {{ item.end_date }}</h4>
+  {% if item.media %}
+<<<<<<< HEAD
+  <img src="../../uploads/{{ item.media }}" style="width:70%"\>
+=======
+  <img src="{{ item.media.url }}" style="width:70%"\>
+>>>>>>> a043b43b11e3c92c715211deeb3973d8d8bc3018
+  <br>
+  {% endif %}
+  </center>
+  {{ item.description }}
+   <hr>
+{% endfor %}
+{% endblock content %}

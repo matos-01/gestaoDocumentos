@@ -1,0 +1,274 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% load tags_extra %}
+{% block script %}
+ <script src="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.js"></script>
+ <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.css">
+ <script>
+  $(document).ready(function(){
+    $('#folder_modal').appendTo("body");
+    $('#docModal').appendTo("body");
+    $('#sidebarCollapse').on('click', function () {
+      $('#sidebar').toggleClass('active');
+      $(this).toggleClass('active');
+    });
+  });
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+  function openUpload(document_id){
+    url = "/documento/upload_arquivo/" + document_id
+    window.open(url);
+  }
+  function openStatusModal(id, value){
+    if(value=='2'){
+      text = 'Informe Abaixo o Motivo da Aprovação:'
+      document.getElementById('status_message').innerHTML = text;
+      $("#reason").show();
+    };
+    if(value=='3'){
+      text = 'Informe abaixo o motivo de reprovação do documento:'
+      document.getElementById('status_message').innerHTML = text;
+      warning = '*Depois dessa ação só poderão ser enviados novos arquivos quando o documento for retomado.'
+      document.getElementById('warning_message').innerHTML = warning;
+      $("#warning_message").show();
+      $("#reason").show();
+    };
+    if(value=='5'){
+      text = 'Informe abaixo o motivo do cancelamento do Documento:'
+      document.getElementById('status_message').innerHTML = text;
+      warning = '*Depois dessa ação nenhum arquivo poderá ser enviado para o documento.'
+      document.getElementById('warning_message').innerHTML = warning;
+      $("#warning_message").show();
+      $("#reason").show();
+    };
+    $('#status_modal').appendTo("body").modal('show');
+  }
+  function changeStatus(){
+    message = $("#status_message").text();
+    reason = $("#reason").val();
+    if(message.includes("Aprovação")){
+      status = 2;
+    }
+    if(message.includes("reprovação")){
+      status = 3;
+    }
+    if(message.includes("cancelamento")){
+      status = 5;
+    }
+    $.ajax({
+      url: "{% url 'change_status_rest' %}",
+      type: "GET",
+      data: {"project_id": '{{ object.id }}',
+             "status": status,
+             "reason": reason,
+	      "type": "doc",
+      }
+    }).done(function(response_data){
+      if(response_data.success === true){
+        $("#status_modal").modal("hide");
+        message = 'Documento Alterado com Sucesso!';
+        title = 'Alteração de Documento';
+        document.getElementById('result_message').innerHTML = message;
+        document.getElementById('result_title').innerHTML = title;
+        $('#result_modal').appendTo("body").modal('show');
+      }else{
+        $("#status_modal").modal("hide");
+        message = 'Erro ao Alterar Status' + response_data.error;
+        title = 'Alteração de Projeto';
+        document.getElementById('result_message').innerHTML = message;
+        document.getElementById('result_title').innerHTML = title;
+        $('#result_modal').appendTo("body").modal('show');
+      }
+    });
+  }
+  </script>
+{% endblock script %}
+{% block style %}
+<style>
+    #tableApprovalHistory, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      margin-top: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: lightgray;
+    }
+</style>
+{% endblock style %}
+{% block content %}
+<div id="result_modal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h3 id="result_title"></h3>
+            </div>
+            <div class="modal-body">
+              <p id="result_message" style="margin-top:10px; color:red; text-align:center"></p>
+            </div>
+            <div class="modal-footer" style="text-align:center">
+                <button type="button" class="btn btn-lg btn-secondary" onclick="location.reload()">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="docModal" class="modal fade" oncontextmenu="return false;">
+    <div class="modal-dialog modal-lg" style="pointer-events: none">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">{{ object.name }}</h2>
+            </div>
+            <div class="modal-body">
+                <h6>*Nunca salve os arquivos localmente. Sempre consulte a última versão online!</h6>
+                <embed src="{{ object.document_file.url }}#toolbar=0"
+                       frameborder="0" width="100%" height="600px" toolbar=0>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<div id="folder_modal" class="modal fade" id="folder_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Criar Nova Pasta</h3>
+            </div>
+            <div class="modal-body">
+              <label>Nome da Nova Pasta:</label>
+              <input type="text" id="folder_name" class="form-control"/>
+              <p id="success_create" style="margin-top:10px; color:red; display:none; text-align:center"><b>Nova Pasta Criada com Sucesso!</b></p>
+            </div>
+            <div class="modal-footer" style="text-align:center">
+                <button type="button" id="btn_create" class="btn btn-lg btn-success" onclick="createFolder(); return false">Criar</button>
+                <button type="button" class="btn btn-lg btn-secondary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="status_modal" class="modal fade" id="folder_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h3>Alteração de Status do Projeto</h3>
+            </div>
+            <div class="modal-body">
+              <p id="status_message" style="text-align:left; color:black"></p>
+              <textarea id="reason" rows="2" class="form-control" style="margin-top:5px"></textarea>
+              <p id="warning_message" style="text-align:left; margin-bottom:1px; margin-top:10px; color:red; display:none; font-size:10px"></p>
+            </div>
+            <div class="modal-footer" style="text-align:center">
+                <button type="button" id="btn_create" class="btn btn-lg btn-success" onclick="changeStatus(); return false">Sim</button>
+                <button type="button" class="btn btn-lg btn-secondary" data-dismiss="modal">Não</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+  <div class="row">
+    <h5 style="margin-bottom:10px; color:black;">Detalhes do Documento</h5>
+  </div>
+  <div class="row">
+    <div class="col-md">
+      <span><strong>Título: </strong>{{ object.name }}</span><br>
+      <span><strong>Código: </strong>{{ object.code }}</span><br>
+      <span><strong>Categoria: </strong>{{ object.document_subcategory.category.name }}</span><br>
+      <span><strong>Subcategoria: </strong>{{ object.document_subcategory.name }}</span>
+    </div>
+    <div class="col-md" style="text-align:right;">
+      <span><strong>Status: </strong>{% get_item object.statuses object.status %}</span><br>
+      {% if object.expiration_date %}
+        <span><strong>Dt. Expiração: </strong>{{ object.expiration_date|parse_date }}</span><br>
+      {% else %}
+        <span><strong>Dt. Expiração: </strong> - </span><br>
+      {% endif %}
+      <span><strong>Criador: </strong>{{ object.uploaded_by }}</span><br>
+      <span><strong>Aprovador: </strong>{{ object.approver.username }}</span>
+    </div>
+  </div>
+</div>
+<div>
+  <div class="container-fluid">
+    {% if object.status == 2 or object.status == 6 or object.status == 1 %}
+    <div class="form-group" style="margin-top: 20px">
+  {% if perms.panflight.view_document %}
+	    <center><div class="col-sm">
+        <button type="button" class="btn btn-info btn-sm" data-toggle="modal" data-target="#docModal">
+		        <span class="fas fa-eye"></span> Visualizar Documento
+        </button>
+          </div>
+   {% endif %}
+	<br/>
+      <label for="projectDescription">Descrição do Documento</label>
+      <textarea readonly class="form-control" id="projectDescription" rows="3">{{ object.comments }}</textarea>
+      {% if object.status == 1 or object.status == 0 %}
+        <label for="projectDescription" style="margin-top: 10px">Comentários</label>
+        <textarea readonly class="form-control" id="projectDescription" rows="3">{{ object.last_activity.reason }}</textarea>
+      {% endif %}
+    </div>
+  {% endif %}
+  </div>
+  <center>
+    {% if request.user.username == object.approver.username %}
+      <div class="container-fluid " style="margin-top: 20px">
+        <div class="row">
+          {% if object.status == 1 %}
+          <div class="col-sm">
+            <button class="btn btn-sm btn-success" onclick="openStatusModal(this.id, '2'); return false">
+              <span class="fas fa-thumbs-up"></span> Aprovar Documento
+            </button>
+          </div>
+          <div class="col-sm">
+            <button class="btn btn-sm btn-secondary" onclick="openStatusModal(this.id, '3'); return false">
+              <span class="fas fa-thumbs-down"></span> Reprovar Documento
+            </button>
+          </div>
+          <div class="col-sm">
+            <button class="btn btn-sm btn-danger" onclick="openStatusModal(this.id, '5'); return false">
+              <span class="fas fa-ban"></span> Cancelar Documento
+            </button>
+          </div>
+    {% elif object.status == 2 %}
+          <div class="col-sm">
+            <button class="btn btn-sm btn-danger" onclick="openStatusModal(this.id, '5'); return false">
+              <span class="fas fa-ban"></span> Cancelar Documento
+            </button>
+          </div>
+    {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </center>
+  {% if activity %}
+  <div class="container-fluid" style="margin-top:20px;">
+    <h5>Histórico de Aprovações</h5>
+    <table id="tableApprovalHistory" style="width:100%;">
+      <thead>
+        <th>Usuário</th>
+        <th>Data</th>
+        <th>Status</th>
+      </thead>
+      <tbody>
+          {% for item in activity %}
+        <tr>
+            <td>{{ item.user }}</td>
+            <td>{{ item.date|parse_date }}</td>
+            {% if item.reason %}
+              <td>{% get_item item.events item.event %}  <span class="fas fa-comment" data-toggle="tooltip" data-html="true" title="{{ item.reason|default:"" }}"/></span></td>
+            {% else %}
+              <td>{% get_item item.events item.event %}</td>
+            {% endif %}
+        </tr>
+          {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+  {% endif %}
+{% endblock content %}

@@ -1,0 +1,44 @@
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="../static/bootstrap-4.5.0-dist/css/bootstrap.css">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="../static/js/jquery-3.5.1.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="../static/bootstrap-4.5.0-dist/js/bootstrap.min.js"></script>
+
+    <style>
+      body {background: #172967}
+      .btn-primary {
+        background-color: #C2B25B !important;
+        border-color: #9C8A27 !important;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <form action="{% url 'login' %}" autocomplete="off" method="post">
+      {% csrf_token %}
+      <div class="container">
+        <div class="row">
+          <div class="col-md-8 offset-md-2" style="background: white; margin-top: 10%">
+            <div class="text-center">
+              <img src="../static/img/main_logo.png"  width="80%" style="margin-bottom:20px">
+              <div class="col-md-8 offset-md-2">
+                <div class="p-4">
+                  <h4 class="text-center" style="color:#0055A5; margin-bottom:30px; margin-top:30px"><i>Faça <strong>login</strong> para acessar a plataforma</i></h4>
+                  <div class="input-group mb-2">
+                    <input type="text" class="form-control" id="{{ form.username.auto_id }}" placeholder="Usuário" name="{{ form.username.name }}" data-toggle="tooltip" data-placement="top" title="Informe seu Nome de Usuário">
+                  </div>
+                  <div class="input-group mb-2" style="margin-bottom: 15px; text-align:center">
+                    <input type="password" class="form-control" name="{{ form.password.name }}" id="{{ form.password.auto_id }}" placeholder="Senha">
+                  </div>
+                </div>
+                <div class="text-center">
+                  <input class="btn btn-md btn-primary" style="margin-bottom: 20px" type="submit" value="Login"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </body>

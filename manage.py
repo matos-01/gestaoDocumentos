@@ -1,0 +1,12 @@
+#!/usr/bin/python3
+import django
+import os
+import sys
+ 
+if __name__ == "__main__":
+    os.environ["DJANGO_SETTINGS_MODULE"] = "panflight.settings"
+    django.setup()
+ 
+    from django.core.management import execute_from_command_line
+
+    execute_from_command_line(sys.argv)

@@ -1,0 +1,174 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% load tags_extra %}
+{% block script %}
+  <script>
+  $(document).ready(function(){
+    $('#sidebarCollapse').on('click', function () {
+      $('#sidebar').toggleClass('active');
+      $(this).toggleClass('active');
+    });
+    $("#{{ form.name.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.draw.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.version.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.comments.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.project_file.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.status.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.project_id.auto_id }}").val('{{ object.id }}');
+    url = window.opener.location.href;
+    if(url.includes("arquivo")){
+      $("#id_draw").val('{{ draw.draw }}');
+      document.getElementById('id_draw').readOnly = true;
+      $("#id_name").val('{{ draw.name }}');
+      document.getElementById('id_name').readOnly = true;
+    }
+    if(url.includes("arquivo")){
+      $('#id_version').focusout(function(){
+        $.ajax({
+          url: "{% url 'check_file_version_rest' %}",
+          type: "GET",
+          data: {"project_file_id": '{{ draw.id }}',
+                 "version": $("#id_version").val(),
+          }
+        }).done(function(response_data){
+          if(response_data.same === true){
+            $("#id_version").val('');
+            $("#id_version").focus();
+            text = "Versão do Arquivo Já Cadastrada"
+            document.getElementById('error_message').innerHTML = text;
+            $('#error_modal').appendTo("body").modal('show');
+          }
+        });
+      })
+    }
+    $('#id_name').focusout(function(){
+      $.ajax({
+        url: "{% url 'check_file_name_rest' %}",
+        type: "GET",
+        data: {"project_file_id": '{{ draw.id }}',
+               "name": $("#id_name").val(),
+        }
+      }).done(function(response_data){
+        if(response_data.same === true){
+          $("#id_name").val('');
+          $("#id_name").focus();
+          text = "Já existe um Arquivo com Este Nome no Projeto"
+          document.getElementById('error_message').innerHTML = text;
+          $('#error_modal').appendTo("body").modal('show');
+        }
+      });
+    })
+  });
+
+function closeWindow(){
+    url = window.opener.location.href;
+    window.opener.location.href = url;
+    window.close();
+}
+function closeModal(){
+    message = $("#error_message").html();
+    if(message.includes("Nome")){
+      $("#id_name").focus();
+    }else{
+      $("#id_version").focus();
+    }
+    $("#error_modal").modal('hide');
+}
+
+  </script>
+{% endblock script %}
+{% block style %}
+<style>
+label { margin-top:10px }
+</style>
+{% endblock style %}
+{% block content %}
+ {% if messages %}
+      <div class="container-fluid">
+          {% for message in messages %}
+              {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+              <div id="error" class="alert alert-danger col-md-6 col-md-offset-3" style="text-align: center">
+              <ul>
+                <strong>{{ message }}</strong>
+              </ul>
+              </div>
+              <div class="col-md-12" style="margin-top:20px; text-align:center">
+                <button class="btn btn-lg btn-secondary" onclick="window.history.back();">Voltar</button>
+              </div>
+              {% else %}
+              <div id="success" class="alert alert-success" style="text-align: center">
+                <ul>
+                  <strong>{{ message }}</strong>
+                </ul>
+              </div>
+              <div class="container">
+                <div class="col-md-12" style="margin-top:20px; text-align:center">
+                  <button class="btn btn-lg btn-secondary" onclick="closeWindow(); return false">Fechar</button>
+                </div>
+              </div>
+              {% endif %}
+          {% endfor %}
+      </div>
+{% else %}
+<div class="modal fade" id="error_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            </div>
+            <div class="modal-body">
+              <center><h3 id="error_message"></h3>
+            </div>
+            <div class="modal-footer" style="text-align:center">
+                <button type="button" class="btn btn-lg btn-primary" onclick="closeModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+  <form id="project_file_upload_form" action="{% url 'project_file_upload' object.pk %}" method="POST" autocomplete="off" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.project_id.as_hidden }}
+<h2 style="text-align: center">Upload de Arquivos</h2>
+<h3>{{ object.identifier }} - {{ object.name }}</h3>
+            <div class="container-fluid " style="margin-top: 20px">
+            </div>
+            <div class="container-fluid" style="margin-top:20px">
+              <label>Nome:</label>
+              {{ form.name }}
+              <label>Versão:</label>
+              {{ form.version }}
+              <label>Número do Desenho:</label>
+              {{ form.draw }}
+              <label>Comentários:</label>
+              {{ form.comments }}
+            </div>
+            <center><div class="row col-md-12 col-md-1">
+              <div class="col-md-6">
+                <label>Arquivo:</label>
+                {{ form.project_file }}
+              </div>
+              <div class="col-md-6">
+                <label>Disponível P/ Produção?:</label>
+                {{ form.status }}
+              </div>
+            </div>
+            <center><div class="row col-md-12 col-md-1">
+              <div class="col-md-12">
+                <label>Grupos:</label>
+		<hr>
+	      </div>
+		<div class="col-md-12" style="padding: 0px">
+                       {% for value, text in form.groups.field.choices %}
+                               <label for="id_label{{ value }}" style="margin-right: 30px">
+					 <input type="checkbox" id="id_label_{{ value }}" value={{ value }} name="groups"> {{ text }}
+			       </label>
+                       {% endfor %}
+		</div>
+	     </div>
+        <center><div class="container">
+            <div class="col-md-10" style="margin-top:20px">
+              <button class="btn btn-lg btn-primary" type="submit" value="submit">Fazer Upload</button>
+              <button class="btn btn-lg btn-secondary" onclick="closeWindow();">Fechar</button>
+            </div>
+        </div>
+{% endif %}
+{% endblock content %}

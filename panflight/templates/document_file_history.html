@@ -1,0 +1,66 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% load tags_extra %}
+{% block script %}
+    <script>
+  function openUpload(project_id){
+    url = "/projeto/upload_arquivo/" + project_id + "/" + '{{ object.id }}'
+    window.open(url);
+  }
+    </script>
+{% endblock script %}
+{% block content %}
+<h2 style="text-align: center">Histórico de Modificações</h2>
+            <h3>{{ object.project.identifier }} - {{ object.project.name }}</h3>
+            <h4>Desenho: {{ object.draw }}</h4>
+            {% if object.project.status == 1 %}
+              <div class="container-fluid " style="margin-top: 20px">
+                <div class="row">
+                  <div class="col-sm">
+                  <center><button class="btn btn-sm btn-success" onclick="openUpload('{{ object.project.id }}'); return false">
+                      <span class="fas fa-upload" data-placement="top"></span> Revisar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+            <div class="container-fluid" style="margin-top:20px">
+              <table class="table table-striped table-sm " id="projectFiles">
+                <thead class="thead-dark">
+                  <tr>
+                    <th scope="col">Data</th>
+                    <th scope="col">Nome</th>
+                    <th scope="col">Versão</th>
+                    <th scope="col">Autor</th>
+                    <th scope="col">Comentários</th>
+                    <th scope="col">Disponível para Produção?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in object_list %}
+                  <tr>
+                    <td>{{ item.upload_date|date:"d/m/Y H:i:s" }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.version }} <a href="{{ item.project_file.url }}" target="_blank"> <i class="fas fa-file-download"></i></a></td>
+                    <td>{{ item.uploaded_by }}</td>
+                    <td>{{ item.comments }}</td>
+                    {% if item.status != 0 %}
+                      <td>Não</td>
+                    {% else %}
+                      <td>Sim</td>
+                    {% endif %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            <div class="container-fluid " style="margin-top: 20px">
+              <div class="row">
+                <div class="col-sm">
+                  <center><button class="btn btn-sm btn-primary" onclick="window.history.back()">
+                    <span class="fas fa-arrow-left" data-placement="top"></span> Voltar
+                  </button>
+                </div>
+              </div>
+            </div>
+            </div>
+{% endblock content %}

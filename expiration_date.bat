@@ -1,0 +1,1 @@
+python "C:\Gestor de Documentos\panflight\manage.py" runscript expiration_date.py

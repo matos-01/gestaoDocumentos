@@ -1,0 +1,211 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% load tags_extra %}
+{% block script %}
+  <script>
+  $(document).ready(function(){
+    $("#{{ form.code.auto_id }}").attr({'class':'form-control', 'style': 'width:80%'});
+    $("#{{ form.name.auto_id }}").attr({'class':'form-control', 'style': 'width:80%'});
+    $("#{{ form.version.auto_id }}").attr({'class':'form-control', 'style': 'width:80%'});
+    $("#{{ form.comments.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.users.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.document_file.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.expiration_date.auto_id }}").attr({'class':'form-control', 'style': 'width:80%'});
+    $("#{{ form.category.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.reason.auto_id }}").attr({'class':'form-control'});
+    $("#approval_reason").attr({'class':'form-control'});
+    $("#{{ form.perpetual.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.reason.auto_id }}").prop('disabled', 'disabled');
+    jQuery.datetimepicker.setLocale('pt-BR');
+    jQuery('#id_expiration_date').datetimepicker({
+       timepicker:false,
+       format:'d/m/Y'
+    });
+    var approvers = JSON.parse('{{ approvers|safe }}');
+    console.log(approvers);
+    var datalist = $("<datalist id='approvers'>");
+    for(var i = 0; i < approvers.length; i++){
+      approver = approvers[i];
+      row = '<option value="' + approver + '"></option>'
+      datalist.append(row);
+    }
+    $("#approver_list").html(datalist);
+
+  });
+
+function closeWindow(){
+    url = window.opener.location.href;
+    window.opener.location.href = url;
+    window.close();
+}
+function reasonModal(){
+    text = 'Considerações do documento:'
+    document.getElementById('status_message').innerHTML = text;
+    $('#reason_modal').appendTo("body").modal('show');
+}
+function formSubmit(){
+  $("#{{ form.send_approval.auto_id }}").val('True');
+  approver = $("#approver").val();
+  $("#{{ form.users.auto_id }}").val(approver);
+  approval_reason = $("#approval_reason").val();
+  $("#{{ form.approval_reason.auto_id }}").val(approval_reason);
+  document.forms['document_file_upload_form'].submit();
+}
+ $(function() {
+    $('#id_perpetual').click(function() {
+        var disable = $(this).is(':checked');
+        $('#id_expiration_date').attr('disabled', disable);
+    });
+});
+
+  </script>
+{% endblock script %}
+{% block style %}
+<style>
+label { margin-top:10px }
+</style>
+{% endblock style %}
+{% block content %}
+<div class="modal fade" id="reason_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h3>Enviar P/ Aprovação</h3>
+            </div>
+            <div class="modal-body">
+              <p id="status_message" style="text-align:left; color:black"></p>
+              <textarea id="approval_reason" rows="3"></textarea>
+              <label>Insira o Aprovador: </label>
+              <input id="approver" list="approvers" class="form-control"></input>
+              <datalist id="approver_list"/>
+            </div>
+            <div class="modal-footer" style="text-align:center">
+                <button type="button" id="btn_create" class="btn btn-lg btn-success" onclick="formSubmit(); return false">Sim</button>
+                <button type="button" class="btn btn-lg btn-secondary" data-dismiss="modal">Não</button>
+            </div>
+        </div>
+    </div>
+</div>
+ {% if messages %}
+      <div class="container-fluid">
+          {% for message in messages %}
+              {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+              <div id="error" class="alert alert-danger" style="text-align: center">
+              <ul>
+                <strong>{{ message }}</strong>
+              </ul>
+              </div>
+              <div class="col-md-12" style="margin-top:20px; text-align:center">
+                <button class="btn btn-lg btn-secondary" onclick="window.history.back();">Voltar</button>
+              </div>
+              {% else %}
+              <div id="success" class="alert alert-success" style="text-align: center">
+                <ul>
+                  <strong>{{ message }}</strong>
+                </ul>
+              </div>
+              <div class="container">
+                <div class="col-md-12" style="margin-top:20px; text-align:center">
+                  <a class="btn btn-lg btn-secondary" href="{% url 'home' %}">Fechar</a>
+                </div>
+              </div>
+              {% endif %}
+          {% endfor %}
+      </div>
+{% else %}
+<div class="modal fade" id="error_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            </div>
+            <div class="modal-body">
+                <h3 id="error_message"></h3>
+            </div>
+            <div class="modal-footer" style="text-align:center">
+                <button type="button" class="btn btn-lg btn-primary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+  <form id="document_file_upload_form" action="{% url 'document_upload' %}" method="POST" autocomplete="off" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.document_id.as_hidden }}
+    {{ form.send_approval.as_hidden }}
+    {{ form.approval_reason.as_hidden }}
+    {{ form.users.as_hidden }}
+ {% if document %}
+ <h2 style="text-align: center">Upload de Documento</h2>
+ <h3>{{ document.code }} - {{ document.name }}</h3>
+ {% else %}
+<h2 style="text-align: center">Upload de Documento</h2>
+{% endif %}
+<div class="container-fluid" style="margin-top:20px">
+	    <center><div class="form-inline" style="margin-top:20px">
+		    <div class="col-md-6" style="margin-top:10px">
+			  <label>Código:</label>
+			  {{ form.code }}
+		    </div>
+		    <div class="col-md-6" style="margin-top:10px">
+			  <label>Nome:</label>
+			  {{ form.name }}
+		    </div>
+	    </div>
+	    <center><div class="form-inline" style="margin-top:20px">
+	       <div class="col-md-6" style="margin-top:10px">
+                  <label>Versão:</label>
+                  {{ form.version }}
+	       </div>
+	       <div class="col-md-4" style="margin-top:10px">
+                  <label>Data de Expiração:</label>
+                  {{ form.expiration_date }}
+	       </div>
+	       <div class="col-md-2" style="margin-top:10px">
+                  <label>Vitalício?</label>
+                  {{ form.perpetual }}
+	       </div>
+	    </div>
+            <center><div class="row col-md-11">
+              <label>Descrição:</label>
+              {{ form.comments }}
+	    </div>
+	    {% if document %}
+	    <center><div class="row col-md-11" style="text-align:center">
+              <div class="col-md-12">
+                <label>Comentários Aprovador:</label>
+		{{ form.reason }}
+              </div>
+              <div class="col-md-12">
+                <label>Arquivo:</label>
+                <a href="{{ document.document_file.url }}" target="_blank"><u>{{ document.document_file|filename }}</u></a>
+              </div>
+	     </div>
+	    {% endif %}
+            <center><div class="row col-md-11">
+              <div class="col-md-6">
+                {% if document %}
+                <label>Enviar Novo Arquivo:</label>
+                {{ form.document_file }}
+                {% else %}
+                <label>Arquivo:</label>
+                {{ form.document_file }}
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label>Categoria:</label>
+                {{ form.category }}
+              </div>
+            </div>
+        <center><div class="container">
+            <div class="col-md-10" style="margin-top:20px">
+	      {% if document %}
+              <button class="btn btn-lg btn-success" onclick="reasonModal(); return false">Enviar P/ Aprovação</button>
+              <button class="btn btn-lg btn-primary" type="submit" value="submit">Salvar Alterações</button>
+	      {% else %}
+              <button class="btn btn-lg btn-success" onclick="reasonModal(); return false">Enviar P/ Aprovação</button>
+              <button class="btn btn-lg btn-primary" type="submit" value="submit">Salvar Alterações</button>
+	      {% endif %}
+              <button class="btn btn-lg btn-secondary" onclick="close();">Fechar</button>
+            </div>
+        </div>
+{% endif %}
+{% endblock content %}

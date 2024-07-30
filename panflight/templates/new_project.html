@@ -1,0 +1,130 @@
+{% extends 'layout.html' %}
+{% load static %}
+
+{% block header %}
+Cadastro de Projetos
+{% endblock header %}
+
+{% block script %}
+    <script>
+  $(document).ready(function(){
+    $("#{{ form.identifier.auto_id }}").attr({'class':'form-control', 'style':'width: 85%'});
+    $("#{{ form.description.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.name.auto_id }}").attr({'class':'form-control', 'style':'width: 85%'});
+    $("#{{ form.media.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.start_date.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.end_date.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.template.auto_id }}").attr({'class':'form-control'});
+    $("#{{ form.original_pn.auto_id }}").attr({'class':'form-control', 'style':'width: 85%'});
+    jQuery.datetimepicker.setLocale('pt-BR');
+    jQuery('#id_start_date').datetimepicker({
+       timepicker:false,
+       format:'d/m/Y'
+    });
+    jQuery('#id_end_date').datetimepicker({
+       timepicker:false,
+       format:'d/m/Y'
+    });
+    $('#sidebarCollapse').on('click', function () {
+      $('#sidebar').toggleClass('active');
+      $(this).toggleClass('active');
+    });
+  });
+  function validateForm(){
+    document.getElementById("project_create_form").submit();
+  }
+  </script>
+{% endblock script %}
+
+{% block content %}
+ {% if messages %}
+      <div class="container-fluid">
+          {% for message in messages %}
+              {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+              <div id="error" class="alert alert-danger col-md-6 col-md-offset-3" style="text-align: center">
+              <ul>
+                <strong>{{ message }}</strong>
+              </ul>
+              </div>
+              <div class="col-md-12" style="margin-top:20px; text-align:center">
+                <button class="btn btn-lg btn-secondary" onclick="window.history.back();">Voltar</button>
+              </div>
+              {% else %}
+              <div id="success" class="alert alert-success" style="text-align: center">
+                <ul>
+                  <strong>{{ message }}</strong>
+                </ul>
+              </div>
+              <div class="container">
+                <div class="col-md-12" style="margin-top:20px; text-align:center">
+                  <a class="btn btn-lg btn-secondary" href="{% url 'home' %}">Voltar</a>
+                </div>
+              </div>
+              {% endif %}
+          {% endfor %}
+      </div>
+{% else %}
+<div class="modal fade" id="error_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            </div>
+            <div class="modal-body">
+                <h3 id="error_message"></h3>
+            </div>
+            <div class="modal-footer" style="text-align:center">
+                <button type="button" class="btn btn-lg btn-primary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+  <form id="project_create_form" action="{% url "create_project" %}" method="POST" autocomplete="off" enctype="multipart/form-data">
+      {% csrf_token %}
+<h2 style="text-align: center">Novo Projeto <strong>{{ object.identifier }}</strong></h2>
+      <center><div class="form-inline col-md-12">
+          <div class="col-md-3" style="margin-top:10px">
+              <label for="{{ form.identifier.auto_id }}">Código do Projeto</label>
+              {{ form.identifier }}
+          </div>
+          <div class="col-md-3" style="margin-top:10px">
+              <label for="{{ form.original_pn.auto_id }}">PN Original</label>
+              {{ form.original_pn }}
+          </div>
+          <div class="col-md-6" style="margin-top:10px">
+              <label for="{{ form.name.auto_id }}">Nome do Projeto</label>
+              {{ form.name }}
+          </div>
+        </div>
+      <center><div class="form-inline col-md-12">
+        </div>
+        <div class="form-inline col-md-12">
+          <div class="col-md-6" style="margin-top:15px">
+              <label for="{{ form.start_date.auto_id }}">Data Prev. de Início</label>
+              {{ form.start_date }}
+          </div>
+            <div class="col-md-6" style="margin-top:15px">
+              <label for="{{ form.end_date.auto_id }}">Data Prev. de Término</label>
+              {{ form.end_date }}
+          </div>
+        </div>
+        <div class="col-md-12" style="margin-top:10px">
+            <label for="{{ form.description.auto_id }}">Descrição do Projeto</label>
+            {{ form.description }}
+        </div>
+        <div class="col-md-12" style="margin-top:10px">
+            <label for="{{ form.media.auto_id }}">Imagem do Projeto</label>
+            {{ form.media }}
+        </div>
+        <div class="col-md-12" style="margin-top:10px">
+            <label for="{{ form.template.auto_id }}">Template do Projeto</label>
+            {{ form.template }}
+        </div>
+        <center><div class="container">
+            <div class="col-md-10" style="margin-top:20px">
+              <button class="btn btn-lg btn-primary" onclick="validateForm(); return false">Criar Projeto</button>
+              <button class="btn btn-lg btn-secondary" onclick="window.history.back();">Voltar</button>
+            </div>
+        </div>
+    </form>
+{% endif %}
+{% endblock content %}

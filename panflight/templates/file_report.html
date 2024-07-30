@@ -1,0 +1,173 @@
+{% extends 'layout.html' %}
+{% load static %}
+{% load tags_extra %}
+
+{% block header %}
+Relatório de Arquivos
+{% endblock header %}
+
+{% block script %}
+ <script src="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.js"></script>
+ <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.css">
+    <script>
+  $(document).ready(function(){
+    $("input[type=text]").attr({'class':'form-control'});
+    $("select").attr({'class':'form-control'});
+    jQuery.datetimepicker.setLocale('pt-BR');
+    jQuery('#id_start_date').datetimepicker({
+       timepicker:false,
+       format:'d/m/Y'
+    });
+    jQuery('#id_end_date').datetimepicker({
+       timepicker:false,
+       format:'d/m/Y'
+    });
+    $('#sidebarCollapse').on('click', function () {
+      $('#sidebar').toggleClass('active');
+      $(this).toggleClass('active');
+    });
+  });
+  function validateForm(){
+    document.getElementById("project_files_form").submit();
+  }
+  </script>
+{% endblock script %}
+
+{% block content %}
+ {% if messages %}
+      <div class="container-fluid">
+          {% for message in messages %}
+              {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
+              <div id="error" class="alert alert-danger col-md-6 col-md-offset-3" style="text-align: center">
+              <ul>
+                <strong>{{ message }}</strong>
+              </ul>
+              </div>
+              <div class="col-md-12" style="margin-top:20px; text-align:center">
+                <button class="btn btn-lg btn-secondary" onclick="window.history.back();">Voltar</button>
+              </div>
+              {% else %}
+              <div id="success" class="alert alert-success" style="text-align: center">
+                <ul>
+                  <strong>{{ message }}</strong>
+                </ul>
+              </div>
+              <div class="container">
+                <div class="col-md-12" style="margin-top:20px; text-align:center">
+                  <a class="btn btn-lg btn-secondary" href="{% url 'home' %}">Voltar</a>
+                </div>
+              </div>
+              {% endif %}
+          {% endfor %}
+      </div>
+{% else %}
+<div class="modal fade" id="error_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            </div>
+            <div class="modal-body">
+                <h3 id="error_message"></h3>
+            </div>
+            <div class="modal-footer" style="text-align:center">
+                <button type="button" class="btn btn-lg btn-primary" data-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+  <form id="project_files_form" action="{% url "files_report" %}" method="POST" autocomplete="off" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.csv_export.as_hidden }}
+      <h2 style="text-align: center">Relatório de Arquivos</h2><hr width="80%">
+      <center><div class="form-inline col-md-12">
+          <div class="col-md-3" style="margin-top:10px">
+              <label for="{{ form.project_identifier.auto_id }}">Código do Projeto</label>
+              {{ form.project_identifier }}
+          </div>
+          <div class="col-md-3" style="margin-top:10px">
+		  <label for="{{ form.uploaded_by.auto_id }}">Usuário</label>
+              {{ form.uploaded_by }}
+          </div>
+          <div class="col-md-3" style="margin-top:10px">
+              <label for="{{ form.draw.auto_id }}">Desenho</label>
+              {{ form.draw }}
+          </div>
+          <div class="col-md-3" style="margin-top:10px">
+              <label for="{{ form.version.auto_id }}">Versão</label>
+              {{ form.version }}
+          </div>
+        </div>
+        <div class="form-inline col-md-12">
+          <div class="col-md-3" style="margin-top:15px">
+              <label for="{{ form.start_date.auto_id }}">Data Prev. de Início</label>
+              {{ form.start_date }}
+          </div>
+            <div class="col-md-3" style="margin-top:15px">
+              <label for="{{ form.end_date.auto_id }}">Data Prev. de Término</label>
+              {{ form.end_date }}
+          </div>
+          <div class="col-md-3" style="margin-top:10px">
+              <label for="{{ form.name.auto_id }}">Nome</label>
+            {{ form.name }}
+          </div>
+          <div class="col-md-3" style="margin-top:10px">
+              <label for="{{ form.status.auto_id }}">Status</label>
+            {{ form.status }}
+          </div>
+        </div>
+        <center><div class="container">
+            <div class="col-md-10" style="margin-top:20px">
+              <button class="btn btn-lg btn-primary" type="submit" onclick="$('#{{ form.csv_export.auto_id }}').val('False')" >Buscar</button>
+              <button class="btn btn-lg btn-secondary" onclick="window.history.back();">Voltar</button>
+              <button class="btn btn-lg btn-info" type="submit" onclick="$('#{{ form.csv_export.auto_id }}').val('True')" >Exportar P/ CSV</button>
+            </div>
+        </div>
+  {% if object_list %}
+  <div class="center-block" style="margin-top: 10px">
+      <table data-toggle="table" width="100%">
+          <colgroup>
+              <col style="width:80px" />
+              <col style="width:170px" />
+              <col style="width:90px" />
+              <col style="width:100px" />
+              <col style="width:60px" />
+              <col style="width:55px" />
+              <col style="width:130px" />
+              <col style="width:130px" />
+              <col style="width:90px" />
+              <col style="width:130px" />
+          </colgroup>
+        <thead class="thead-dark">
+              <tr>
+                  <th><center>Cód. Proj.</center></th>
+                  <th><center>Nome</center></th>
+                  <th><center>Nome do Arquivo</center></th>
+                  <th><center>Data</center></th>
+                  <th><center>Usuário</center></th>
+                  <th><center>Desenho</center></th>
+                  <th><center>Versão</center></th>
+                  <th><center>Nome</center></th>
+                  <th><center>Status</center></th>
+              </tr>
+          </thead>
+          <tbody>
+              {% for linha in object_list %}
+              <tr>
+                  <td><center>{{ linha.project.identifier }}</center></td>
+                  <td><center>{{ linha.project.name }}</center></td>
+                  <td><center>{{ linha.project_file|filename }}</center></td>
+                  <td><center>{{ linha.upload_date|date:"d/m/Y" }}</center></td>
+                  <td><center>{{ linha.uploaded_by.username }}</center></td>
+                  <td><center>{{ linha.draw }}</center></td>
+                  <td><center>{{ linha.version }}</center></td>
+                  <td><center>{{ linha.name }}</center></td>
+                  <td><center>{% get_item linha.statuses linha.status  %}</center></td>
+              </tr>
+              {% endfor %}
+          </tbody>
+      </table>
+  </div>
+    </form>
+{% endif %}
+{% endif %}
+{% endblock content %}

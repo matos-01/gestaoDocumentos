@@ -1,0 +1,93 @@
+{% extends 'layout.html' %}
+{% load i18n %}
+{% load tags_extra %}
+{% block script %}
+ <script src="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.js"></script>
+ <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.17.1/dist/bootstrap-table.min.css">
+<script>
+$(document).ready(function(){
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+});
+  function openUpload(){
+    url = "/documento/upload/"
+    window.open(url);
+  }
+</script>
+{% endblock script %}
+{%block style%}
+  <style>
+    #tableCarteira, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      margin-top: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: lightgray;
+    }
+    #newsGroup a:hover {
+      background-color: lightgray;
+    }
+    .tooltip-inner {
+      max-width: 350px;
+    }
+  </style>
+{% endblock style %}
+{%block content%}
+            <!-- Page Body -->
+            <div class="line"></div>
+            {% if object_list %}
+	    <center><h2>Lista de Documentos {{ category.name }}</h2>
+              <table data-toggle="table" data-search="true" data-search-align="center" style="width:100%" id="tableCarteira">
+		<thead class="thead-dark">
+                <tr>
+                  <th>Código</th>
+                  <th>Nome</th>
+                  <th>Categoria</th>
+                  <th>SubCategoria</th>
+                  <th>Dt. Expiração</th>
+                  <th>Status</th>
+                  <th>Criador</th>
+                  <th>Aprovador</th>
+                </tr>
+		</thead>
+                  {% for item in object_list %}
+                    <tr>
+		    {% if item.status == 0 or item.status == 3 and request.user == item.uploaded_by %}
+		      <td><a href="{% url 'document_upload_revision' item.pk %}" data-toggle="tooltip" data-html="true">{{ item.code }}</td>
+		    {% else %}
+		      <td><a href="{% url 'document_details' item.pk %}" data-toggle="tooltip" data-html="true">{{ item.code }}</td>
+		    {% endif %}
+                      <td>{{ item.name }}</td>
+                      <td>{{ item.document_subcategory.category.name }}</td>
+                      <td>{{ item.document_subcategory.name }}</td>
+                      {% if item.expiration_date %}
+                        <td>{{ item.expiration_date|parse_date }}</td>
+                      {% else %}
+                        <td> - </td>
+                      {% endif %}
+                      <td>{{ item.last_activity.date|parse_date }} - {% get_item item.statuses item.status  %}</td>
+                      <td>{{ item.uploaded_by }}</td>
+                      <td>{{ item.approver|default:"N/A" }}</td>
+                    </tr>
+                  {% endfor %}
+              </table>
+            {% else %}
+            <center><h2>Não existem Documentos nesse estado.</h2>
+            {% endif %}
+	      <div class="container-fluid " style="margin-top: 20px">
+    {% if perms.panflight.add_document %}
+      <div class="row">
+        <div class="col-sm">
+          <button class="btn btn-sm btn-info" onclick="openUpload(); return false">
+            <span class="fas fa-plus" data-placement="top"></span> Criar Novo Documento
+          </button>
+        </div>
+      </div>
+    {% endif %}
+	      </div>
+
+
+{% endblock content%}
