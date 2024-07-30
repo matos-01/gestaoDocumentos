@@ -20,7 +20,8 @@ ALLOWED_HOSTS = ['*']
 ########## MANAGER CONFIGURATION                                                                             
 ADMINS = (                                                                                                   
     ('Rafael Mendes de Oliveira', 'rafanimal@gmail.com'),                                               
-    ('Gustavo Zanata Guella', 'gustavodesc@gmail.com'),                                                  
+    ('Gustavo Zanata Guella', 'gustavodesc@gmail.com'),
+    ('Rafael Soares Matos', 'rafael.matos@panflight.com')                                                  
 )                                                                                                            
                                                                                                              
 MANAGERS = ADMINS                                                                                            
@@ -126,9 +127,13 @@ USE_TZ = False
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
-MEDIA_ROOT = PureWindowsPath('//Servidor02/GestorDoc$/').drive
-print(MEDIA_ROOT)
-MEDIA_URL = '/uploads/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+
+# MEDIA_ROOT = PureWindowsPath('//Servidor02/GestorDoc$/').drive
+# print(MEDIA_ROOT)
+# MEDIA_URL = '/uploads/'
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
